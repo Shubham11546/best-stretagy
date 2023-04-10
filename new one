@@ -1,0 +1,57 @@
+import time
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+
+# set up the Chrome browser with the webdriver
+browser = webdriver.Chrome()
+browser.get('https://www.your-brokerage-website.com')
+
+# select the ATM strike
+atm_strike = browser.find_element_by_id('atm_strike')
+atm_strike.click()
+
+# set up the alert pop-up window
+alert_window = browser.find_element_by_id('alert_window')
+
+# set up the upper arrow for Buy and the Down arrow for Sell
+buy_arrow = alert_window.find_element_by_id('buy_arrow')
+sell_arrow = alert_window.find_element_by_id('sell_arrow')
+
+# initialize the premium and stop loss values
+premium = 0
+stop_loss = 15
+target = 45
+trail_stop = 5
+
+while True:
+    # check the premium value every 5 seconds
+    time.sleep(5)
+    premium_value = browser.find_element_by_id('premium_value').text
+    premium_change = premium_value - premium
+    
+    # if premium moves up by 10 points, buy the CE or PE
+    if premium_change >= 10:
+        buy_arrow.click()
+        
+        # put stop loss of 15 points and target of 45 points
+        stop_loss_price = premium_value - stop_loss
+        target_price = premium_value + target
+        
+        # trail stop loss by 5 points whenever premium goes upward by 9 points
+        while premium_change >= 9:
+            time.sleep(5)
+            current_price = browser.find_element_by_id('current_price').text
+            
+            # if current price is above the target price, sell
+            if current_price >= target_price:
+                sell_arrow.click()
+                break
+            
+            # if current price is below the stop loss price, sell
+            if current_price <= stop_loss_price:
+                sell_arrow.click()
+                break
+            
+            # if premium moves up by 9 points, trail stop loss by 5 points
+            if (current_price - stop_loss_price) >= trail_stop:
+                stop_loss_price = current_price - trail_stop
